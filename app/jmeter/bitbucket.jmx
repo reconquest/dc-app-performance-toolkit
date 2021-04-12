@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.2.1">
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.4.1">
   <hashTree>
     <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Test Plan" enabled="true">
       <stringProp name="TestPlan.comments">This test plan was created by the BlazeMeter converter v.2.3.14. Please contact support@blazemeter.com for further support.</stringProp>
@@ -87,6 +87,11 @@
           <elementProp name="total.actions.per.hr" elementType="Argument">
             <stringProp name="Argument.name">total.actions.per.hr</stringProp>
             <stringProp name="Argument.value">${__P(total_actions_per_hr,32700)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="addon.bitbucket_external_hook.url" elementType="Argument">
+            <stringProp name="Argument.name">addon.bitbucket_external_hook.url</stringProp>
+            <stringProp name="Argument.value">${__P(addon_bitbucket_external_hook_url, https://github.com/reconquest/bitbucket-external-hook/releases/download/2.2.0/bitbucket-external-hook)}</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
         </collectionProp>
@@ -258,6 +263,29 @@ log.info(&quot;GIT_LOG_DIR: &quot; + gitLogDir);
 	ctx.getEngine().askThreadsToStop();
 }</stringProp>
           </JSR223PreProcessor>
+          <hashTree/>
+          <BeanShellPreProcessor guiclass="TestBeanGUI" testclass="BeanShellPreProcessor" testname="Download bitbucket-external-hook executable" enabled="true">
+            <boolProp name="resetInterpreter">false</boolProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="script">import java.io.File;
+import org.apache.commons.io.FileUtils;
+
+ try {
+ 	String gitTmpWorkspace = props.get(&quot;GIT_TMP_WORKSPACE&quot;);
+ 	String bitbucketExternalHookUrl = vars.get(&quot;addon.bitbucket_external_hook.url&quot;);
+ 	log.info(&quot;Downloading bitbucket-external-hook from &quot; + bitbucketExternalHookUrl);  
+     File bitbucketExternalHook = new File(gitTmpWorkspace + &quot;/addon/bitbucket-external-hook&quot;);
+     FileUtils.copyURLToFile(new URL(bitbucketExternalHookUrl), bitbucketExternalHook);
+     bitbucketExternalHook.setExecutable(true, true);
+ 	String bitbucketExternalHookLocation = (gitTmpWorkspace + &quot;/addon/bitbucket-external-hook&quot;).replace(&quot;\\&quot;, &quot;/&quot;);
+ 	props.put(&quot;BITBUCKET_EXTERNAL_HOOK_LOCATION&quot;, bitbucketExternalHookLocation);
+     log.info(&quot;bitbucket-external-hook is stored in &quot; + bitbucketExternalHookLocation);  
+} catch (Exception e) {
+	log.error(&quot;Error while downloading bitbucket-external-hook from GitHub&quot;, e);
+	ctx.getEngine().askThreadsToStop();
+}</stringProp>
+          </BeanShellPreProcessor>
           <hashTree/>
         </hashTree>
         <IfController guiclass="IfControllerPanel" testclass="IfController" testname="if_os_is_not_windows" enabled="true">
@@ -928,6 +956,628 @@ if (responseCode != &quot;0&quot;) {
               <hashTree/>
             </hashTree>
             <SystemSampler guiclass="SystemSamplerGui" testclass="SystemSampler" testname="jmeter_git_fetch_via_${GIT_PROTOCOL}" enabled="true">
+              <boolProp name="SystemSampler.checkReturnCode">true</boolProp>
+              <stringProp name="SystemSampler.expectedReturnCode">0</stringProp>
+              <stringProp name="SystemSampler.command">git</stringProp>
+              <elementProp name="SystemSampler.arguments" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+                <collectionProp name="Arguments.arguments">
+                  <elementProp name="" elementType="Argument">
+                    <stringProp name="Argument.name"></stringProp>
+                    <stringProp name="Argument.value">fetch</stringProp>
+                    <stringProp name="Argument.metadata">=</stringProp>
+                  </elementProp>
+                </collectionProp>
+              </elementProp>
+              <elementProp name="SystemSampler.environment" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+                <collectionProp name="Arguments.arguments">
+                  <elementProp name="GIT_SSH_VARIANT" elementType="Argument">
+                    <stringProp name="Argument.name">GIT_SSH_VARIANT</stringProp>
+                    <stringProp name="Argument.value">ssh</stringProp>
+                    <stringProp name="Argument.metadata">=</stringProp>
+                  </elementProp>
+                  <elementProp name="GIT_SSH_COMMAND" elementType="Argument">
+                    <stringProp name="Argument.name">GIT_SSH_COMMAND</stringProp>
+                    <stringProp name="Argument.value">${__P(GIT_SSH_COMMAND)}</stringProp>
+                    <stringProp name="Argument.metadata">=</stringProp>
+                  </elementProp>
+                  <elementProp name="GIT_SSL_NO_VERIFY" elementType="Argument">
+                    <stringProp name="Argument.name">GIT_SSL_NO_VERIFY</stringProp>
+                    <stringProp name="Argument.value">1</stringProp>
+                    <stringProp name="Argument.metadata">=</stringProp>
+                  </elementProp>
+                </collectionProp>
+              </elementProp>
+              <stringProp name="SystemSampler.directory">${REPO_SHALLOW_COPY_DIR}</stringProp>
+              <stringProp name="SystemSampler.stderr">${__P(GIT_LOG_DIR)}/giterrors.log</stringProp>
+            </SystemSampler>
+            <hashTree/>
+            <TestAction guiclass="TestActionGui" testclass="TestAction" testname="pacing - end" enabled="true">
+              <intProp name="ActionProcessor.action">1</intProp>
+              <intProp name="ActionProcessor.target">0</intProp>
+              <stringProp name="ActionProcessor.duration">0</stringProp>
+            </TestAction>
+            <hashTree>
+              <JSR223Timer guiclass="TestBeanGUI" testclass="JSR223Timer" testname="pacing timer" enabled="true">
+                <stringProp name="cacheKey">true</stringProp>
+                <stringProp name="filename"></stringProp>
+                <stringProp name="parameters"></stringProp>
+                <stringProp name="script">// concurrency
+def concurrency = ctx.getThreadGroup().getNumThreads()
+
+// Delays between each action in milli-seconds
+def delay_between_transactions = ((1000 * 3600) / (vars.get(&quot;total.actions.per.hr&quot;).toDouble() / concurrency.toDouble())) * 2 // Two actions per cycle
+
+//Sets the pacing length based on the last requests response time. x is the time in ms
+def start_time = Long.valueOf(vars.get(&quot;loop_start_time&quot;))
+def sleep_time = (delay_between_transactions - (System.currentTimeMillis() - start_time)) as int
+
+log.info(&quot;concurrency: ${concurrency}, delay_between_transactions: ${delay_between_transactions}, thread_sleep: ${sleep_time}&quot;)
+
+if ( sleep_time &gt; 0 ) {
+    return sleep_time
+} else {
+    return 0
+}
+</stringProp>
+                <stringProp name="scriptLanguage">groovy</stringProp>
+              </JSR223Timer>
+              <hashTree/>
+            </hashTree>
+          </hashTree>
+          <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="delete_repo_from_disk_if_exists" enabled="true">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="cacheKey">true</stringProp>
+            <stringProp name="script">SampleResult.setIgnore();
+
+def localWorkingCopy = new File(vars.get(&quot;REPO_FOLDER&quot;))
+
+if (localWorkingCopy.exists()) {
+	localWorkingCopy.deleteDir()
+}</stringProp>
+          </JSR223Sampler>
+          <hashTree/>
+        </hashTree>
+      </hashTree>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="addon" enabled="true">
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+          <intProp name="LoopController.loops">-1</intProp>
+        </elementProp>
+        <stringProp name="ThreadGroup.num_threads">1</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">0</stringProp>
+        <boolProp name="ThreadGroup.scheduler">false</boolProp>
+        <stringProp name="ThreadGroup.duration"></stringProp>
+        <stringProp name="ThreadGroup.delay"></stringProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+      </ThreadGroup>
+      <hashTree>
+        <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="users" enabled="true">
+          <stringProp name="filename">${__P(DATASETS_DIR)}/bitbucket/users.csv</stringProp>
+          <stringProp name="fileEncoding"></stringProp>
+          <stringProp name="variableNames">USER_ID,USERNAME,USER_PASSWORD</stringProp>
+          <boolProp name="ignoreFirstLine">false</boolProp>
+          <stringProp name="delimiter">,</stringProp>
+          <boolProp name="quotedData">false</boolProp>
+          <boolProp name="recycle">true</boolProp>
+          <boolProp name="stopThread">false</boolProp>
+          <stringProp name="shareMode">shareMode.all</stringProp>
+        </CSVDataSet>
+        <hashTree/>
+        <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="repos" enabled="true">
+          <stringProp name="filename">${__P(DATASETS_DIR)}/bitbucket/repos.csv</stringProp>
+          <stringProp name="fileEncoding"></stringProp>
+          <stringProp name="variableNames">REPO_SLUG,PROJECT_KEY</stringProp>
+          <boolProp name="ignoreFirstLine">false</boolProp>
+          <stringProp name="delimiter">,</stringProp>
+          <boolProp name="quotedData">false</boolProp>
+          <boolProp name="recycle">true</boolProp>
+          <boolProp name="stopThread">false</boolProp>
+          <stringProp name="shareMode">shareMode.all</stringProp>
+        </CSVDataSet>
+        <hashTree/>
+        <GenericController guiclass="LogicControllerGui" testclass="GenericController" testname="full_repository_clone_and_push" enabled="true"/>
+        <hashTree>
+          <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="addon_set_up_random_variables" enabled="true">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="cacheKey">true</stringProp>
+            <stringProp name="script">// sampler to set up random variables, in the contained pre-processors
+SampleResult.setIgnore();</stringProp>
+          </JSR223Sampler>
+          <hashTree>
+            <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="REPO_URL, REPO_SLUG, GIT_PROTOCOL" enabled="true">
+              <stringProp name="scriptLanguage">groovy</stringProp>
+              <stringProp name="parameters"></stringProp>
+              <stringProp name="filename"></stringProp>
+              <stringProp name="cacheKey">true</stringProp>
+              <stringProp name="script">def repoSlug = &quot;${REPO_SLUG}&quot;
+def projectKey = &quot;${PROJECT_KEY}&quot;
+
+def username = vars.get(&quot;USERNAME&quot;)
+def password = vars.get(&quot;USER_PASSWORD&quot;)
+
+def gitProtocolSshPercentage = Integer.valueOf(&quot;${GIT_PROTOCOL_SSH_PERCENTAGE}&quot;).intValue()
+def randomNum = java.util.concurrent.ThreadLocalRandom.current().nextInt(0, 100)
+if (randomNum &lt;= gitProtocolSshPercentage) {
+	vars.put(&quot;GIT_PROTOCOL&quot;, &quot;ssh&quot;)
+	vars.put(&quot;REPO_URL&quot;, &quot;ssh://git@${application.ssh_hostname}:${application.ssh_port}/&quot; + projectKey + &quot;/&quot; + repoSlug + &quot;.git&quot;) 
+} else {
+	vars.put(&quot;GIT_PROTOCOL&quot;, &quot;http&quot;)
+	vars.put(&quot;REPO_URL&quot;, &quot;${application.protocol}://&quot; + username + &quot;:&quot; + password + &quot;@${application.hostname}:${application.port}${application.postfix}/scm/&quot; + projectKey + &quot;/&quot; + repoSlug + &quot;.git&quot;)
+}
+</stringProp>
+            </JSR223PreProcessor>
+            <hashTree/>
+            <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="REPO_FOLDER (Generate repo folder)" enabled="true">
+              <stringProp name="scriptLanguage">java</stringProp>
+              <stringProp name="parameters"></stringProp>
+              <stringProp name="filename"></stringProp>
+              <stringProp name="cacheKey">true</stringProp>
+              <stringProp name="script">import java.util.UUID;
+
+String gitTmpWorkspace = props.get(&quot;GIT_TMP_WORKSPACE&quot;);
+vars.put(&quot;REPO_FOLDER&quot;, gitTmpWorkspace + &quot;/clone-push-&quot; + vars.get(&quot;REPO_SLUG&quot;) + &quot;-&quot; + UUID.randomUUID());</stringProp>
+            </JSR223PreProcessor>
+            <hashTree/>
+          </hashTree>
+          <SystemSampler guiclass="SystemSamplerGui" testclass="SystemSampler" testname="Setup pre-receive hook (set step)" enabled="true">
+            <boolProp name="SystemSampler.checkReturnCode">true</boolProp>
+            <stringProp name="SystemSampler.expectedReturnCode">0</stringProp>
+            <stringProp name="SystemSampler.command">${__P(BITBUCKET_EXTERNAL_HOOK_LOCATION)}</stringProp>
+            <elementProp name="SystemSampler.arguments" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="Argument">
+                  <stringProp name="Argument.name"></stringProp>
+                  <stringProp name="Argument.value">-b</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+                <elementProp name="" elementType="Argument">
+                  <stringProp name="Argument.name"></stringProp>
+                  <stringProp name="Argument.value">${application.protocol}://${admin_login}:${admin_password}@${application.hostname}:${application.port}/${application.postfix}</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+                <elementProp name="" elementType="Argument">
+                  <stringProp name="Argument.name"></stringProp>
+                  <stringProp name="Argument.value">set</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+                <elementProp name="" elementType="Argument">
+                  <stringProp name="Argument.name"></stringProp>
+                  <stringProp name="Argument.value">-p</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+                <elementProp name="" elementType="Argument">
+                  <stringProp name="Argument.name"></stringProp>
+                  <stringProp name="Argument.value">${PROJECT_KEY}</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+                <elementProp name="" elementType="Argument">
+                  <stringProp name="Argument.name"></stringProp>
+                  <stringProp name="Argument.value">-r</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+                <elementProp name="" elementType="Argument">
+                  <stringProp name="Argument.name"></stringProp>
+                  <stringProp name="Argument.value">${REPO_SLUG}</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+                <elementProp name="" elementType="Argument">
+                  <stringProp name="Argument.name"></stringProp>
+                  <stringProp name="Argument.value">com.ngs.stash.externalhooks.external-hooks:external-pre-receive-hook</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+                <elementProp name="" elementType="Argument">
+                  <stringProp name="Argument.name"></stringProp>
+                  <stringProp name="Argument.value">-e</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+                <elementProp name="" elementType="Argument">
+                  <stringProp name="Argument.name"></stringProp>
+                  <stringProp name="Argument.value">/bin/true</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <elementProp name="SystemSampler.environment" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+              <collectionProp name="Arguments.arguments"/>
+            </elementProp>
+            <stringProp name="SystemSampler.directory">${__P(GIT_TMP_WORKSPACE)}</stringProp>
+            <stringProp name="SystemSampler.stderr">${__P(GIT_LOG_DIR)}/hooks.log</stringProp>
+            <stringProp name="SystemSampler.stdout">${__P(GIT_LOG_DIR)}/hooks.log</stringProp>
+          </SystemSampler>
+          <hashTree/>
+          <SystemSampler guiclass="SystemSamplerGui" testclass="SystemSampler" testname="Setup pre-receive hook (enable step)" enabled="true">
+            <boolProp name="SystemSampler.checkReturnCode">true</boolProp>
+            <stringProp name="SystemSampler.expectedReturnCode">0</stringProp>
+            <stringProp name="SystemSampler.command">${__P(BITBUCKET_EXTERNAL_HOOK_LOCATION)}</stringProp>
+            <elementProp name="SystemSampler.arguments" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="Argument">
+                  <stringProp name="Argument.name"></stringProp>
+                  <stringProp name="Argument.value">-b</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+                <elementProp name="" elementType="Argument">
+                  <stringProp name="Argument.name"></stringProp>
+                  <stringProp name="Argument.value">${application.protocol}://${admin_login}:${admin_password}@${application.hostname}:${application.port}/${application.postfix}</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+                <elementProp name="" elementType="Argument">
+                  <stringProp name="Argument.name"></stringProp>
+                  <stringProp name="Argument.value">enable</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+                <elementProp name="" elementType="Argument">
+                  <stringProp name="Argument.name"></stringProp>
+                  <stringProp name="Argument.value">-p</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+                <elementProp name="" elementType="Argument">
+                  <stringProp name="Argument.name"></stringProp>
+                  <stringProp name="Argument.value">${PROJECT_KEY}</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+                <elementProp name="" elementType="Argument">
+                  <stringProp name="Argument.name"></stringProp>
+                  <stringProp name="Argument.value">-r</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+                <elementProp name="" elementType="Argument">
+                  <stringProp name="Argument.name"></stringProp>
+                  <stringProp name="Argument.value">${REPO_SLUG}</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+                <elementProp name="" elementType="Argument">
+                  <stringProp name="Argument.name"></stringProp>
+                  <stringProp name="Argument.value">com.ngs.stash.externalhooks.external-hooks:external-pre-receive-hook</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <elementProp name="SystemSampler.environment" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+              <collectionProp name="Arguments.arguments"/>
+            </elementProp>
+            <stringProp name="SystemSampler.directory">${__P(GIT_TMP_WORKSPACE)}</stringProp>
+            <stringProp name="SystemSampler.stderr">${__P(GIT_LOG_DIR)}/hooks.log</stringProp>
+            <stringProp name="SystemSampler.stdout">${__P(GIT_LOG_DIR)}/hooks.log</stringProp>
+          </SystemSampler>
+          <hashTree/>
+          <SystemSampler guiclass="SystemSamplerGui" testclass="SystemSampler" testname="addon_clone_repo_via_${GIT_PROTOCOL}" enabled="true">
+            <boolProp name="SystemSampler.checkReturnCode">true</boolProp>
+            <stringProp name="SystemSampler.expectedReturnCode">0</stringProp>
+            <stringProp name="SystemSampler.command">git</stringProp>
+            <elementProp name="SystemSampler.arguments" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="Argument">
+                  <stringProp name="Argument.name"></stringProp>
+                  <stringProp name="Argument.value">clone</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+                <elementProp name="" elementType="Argument">
+                  <stringProp name="Argument.name"></stringProp>
+                  <stringProp name="Argument.value">--no-checkout</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+                <elementProp name="" elementType="Argument">
+                  <stringProp name="Argument.name"></stringProp>
+                  <stringProp name="Argument.value">${REPO_URL}</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+                <elementProp name="" elementType="Argument">
+                  <stringProp name="Argument.name"></stringProp>
+                  <stringProp name="Argument.value">${REPO_FOLDER}</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <elementProp name="SystemSampler.environment" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="DISABLED_GIT_CURL_VERBOSE" elementType="Argument">
+                  <stringProp name="Argument.name">DISABLED_GIT_CURL_VERBOSE</stringProp>
+                  <stringProp name="Argument.value">1</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+                <elementProp name="DISABLED_GIT_TRACE_PACKET" elementType="Argument">
+                  <stringProp name="Argument.name">DISABLED_GIT_TRACE_PACKET</stringProp>
+                  <stringProp name="Argument.value">true</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+                <elementProp name="GIT_SSH_COMMAND" elementType="Argument">
+                  <stringProp name="Argument.name">GIT_SSH_COMMAND</stringProp>
+                  <stringProp name="Argument.value">${__P(GIT_SSH_COMMAND)}</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+                <elementProp name="GIT_SSL_NO_VERIFY" elementType="Argument">
+                  <stringProp name="Argument.name">GIT_SSL_NO_VERIFY</stringProp>
+                  <stringProp name="Argument.value">1</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="SystemSampler.directory">${__P(GIT_TMP_WORKSPACE)}</stringProp>
+            <stringProp name="SystemSampler.stderr">${__P(GIT_LOG_DIR)}/giterrors.log</stringProp>
+          </SystemSampler>
+          <hashTree>
+            <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="OS Process Result" enabled="true">
+              <stringProp name="cacheKey">true</stringProp>
+              <stringProp name="filename"></stringProp>
+              <stringProp name="parameters"></stringProp>
+              <stringProp name="script">import org.apache.commons.lang3.StringUtils;
+
+def responseCode = prev.getResponseCode();
+
+if (responseCode != &quot;0&quot;) {
+	String responseData = prev.getResponseDataAsString();
+	String outputMessage = StringUtils.abbreviate(responseData.replaceAll(&quot;\n&quot;, &quot; &quot;), 100);
+	prev.setResponseMessage(&quot;git clone failed: &quot; + outputMessage);
+
+	prev.setSuccessful(false);
+
+	String envData = prev.getSamplerData();
+	log.error(responseData + envData);
+}</stringProp>
+              <stringProp name="scriptLanguage">groovy</stringProp>
+            </JSR223PostProcessor>
+            <hashTree/>
+          </hashTree>
+          <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="addon_create_repo_shallow_copy" enabled="true">
+            <stringProp name="scriptLanguage">java</stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="cacheKey">true</stringProp>
+            <stringProp name="script">import java.nio.file.Files;
+import java.nio.file.attribute.FileAttribute;
+import org.apache.commons.io.FileUtils;
+import java.nio.file.Paths;
+import java.util.UUID;
+
+ try {
+ 	String gitTmpWorkspace = props.get(&quot;GIT_TMP_WORKSPACE&quot;);
+ 	String shallowCopiesDir = Files.createDirectories(Paths.get(gitTmpWorkspace, new String[]{&quot;shallow_copies&quot;}), new FileAttribute[0])
+ 	                              .toAbsolutePath()
+ 	                              .toString();
+     log.info(&quot;Shallow copies folder: [&quot; + shallowCopiesDir +&quot;] successfully created.&quot;);
+     
+	File srcDir = new File(vars.get(&quot;REPO_FOLDER&quot;) + &quot;/.git&quot;);
+	String repoShallowCopyDir = shallowCopiesDir + &quot;/&quot; + vars.get(&quot;REPO_SLUG&quot;) + &quot;-&quot; + UUID.randomUUID();
+	File trgDir = new File (repoShallowCopyDir + &quot;/.git&quot;);
+	FileUtils.copyDirectory(srcDir, trgDir);
+	vars.put(&quot;REPO_SHALLOW_COPY_DIR&quot;, repoShallowCopyDir);
+	
+} catch (Exception e) {
+	log.error(&quot;Error while creating temporary workspace for pull&quot;, e);
+	ctx.getEngine().askThreadsToStop();
+}</stringProp>
+          </JSR223Sampler>
+          <hashTree/>
+          <LoopController guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
+            <boolProp name="LoopController.continue_forever">true</boolProp>
+            <intProp name="LoopController.loops">-1</intProp>
+          </LoopController>
+          <hashTree>
+            <TestAction guiclass="TestActionGui" testclass="TestAction" testname="pacing - start" enabled="true">
+              <intProp name="ActionProcessor.action">1</intProp>
+              <intProp name="ActionProcessor.target">0</intProp>
+              <stringProp name="ActionProcessor.duration">0</stringProp>
+            </TestAction>
+            <hashTree>
+              <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="Calculate loop start time" enabled="true">
+                <stringProp name="cacheKey">true</stringProp>
+                <stringProp name="filename"></stringProp>
+                <stringProp name="parameters"></stringProp>
+                <stringProp name="script">vars.put(&quot;loop_start_time&quot;,String.valueOf(System.currentTimeMillis()));
+</stringProp>
+                <stringProp name="scriptLanguage">groovy</stringProp>
+              </JSR223PreProcessor>
+              <hashTree/>
+            </hashTree>
+            <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="set_up_random_variables" enabled="true">
+              <stringProp name="scriptLanguage">groovy</stringProp>
+              <stringProp name="parameters"></stringProp>
+              <stringProp name="filename"></stringProp>
+              <stringProp name="cacheKey">true</stringProp>
+              <stringProp name="script">// sampler to set up random variables, in the contained pre-processors
+SampleResult.setIgnore();</stringProp>
+            </JSR223Sampler>
+            <hashTree>
+              <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="NUM_FILES_TO_CHANGE" enabled="true">
+                <stringProp name="scriptLanguage">groovy</stringProp>
+                <stringProp name="parameters"></stringProp>
+                <stringProp name="filename"></stringProp>
+                <stringProp name="cacheKey">true</stringProp>
+                <stringProp name="script">def numFiles = ${__Random(1,${MAX_NUM_FILES_TO_CHANGE})}
+
+vars.put(&quot;NUM_FILES_TO_CHANGE&quot;, &quot;${numFiles}&quot;)</stringProp>
+              </JSR223PreProcessor>
+              <hashTree/>
+              <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="MAX_NUM_LINES_TO_CHANGE" enabled="true">
+                <stringProp name="scriptLanguage">groovy</stringProp>
+                <stringProp name="parameters"></stringProp>
+                <stringProp name="filename"></stringProp>
+                <stringProp name="cacheKey">true</stringProp>
+                <stringProp name="script">vars.put(&quot;MAX_NUM_LINES_TO_CHANGE&quot;, &quot;${MAX_NUM_LINES_TO_CHANGE}&quot;)</stringProp>
+              </JSR223PreProcessor>
+              <hashTree/>
+              <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="COMMIT_MESSAGE" enabled="true">
+                <stringProp name="scriptLanguage">groovy</stringProp>
+                <stringProp name="parameters"></stringProp>
+                <stringProp name="filename"></stringProp>
+                <stringProp name="cacheKey">true</stringProp>
+                <stringProp name="script">def commitPrefix = &quot;&quot;;
+if (${USE_JIRA_KEYS}) {
+	int jiraId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 10000)
+	commitPrefix = &quot;BBSPPP-&quot; + jiraId + &quot; &quot;;
+}
+def commitMessage = commitPrefix + &quot;jMeter commit&quot;
+
+vars.put(&quot;COMMIT_MESSAGE&quot;, &quot;${commitMessage}&quot;)</stringProp>
+              </JSR223PreProcessor>
+              <hashTree/>
+            </hashTree>
+            <LoopController guiclass="LoopControlPanel" testclass="LoopController" testname="change_file" enabled="true">
+              <boolProp name="LoopController.continue_forever">true</boolProp>
+              <stringProp name="LoopController.loops">1</stringProp>
+            </LoopController>
+            <hashTree>
+              <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="addon_change_file" enabled="true">
+                <stringProp name="scriptLanguage">groovy</stringProp>
+                <stringProp name="parameters"></stringProp>
+                <stringProp name="filename"></stringProp>
+                <stringProp name="cacheKey">false</stringProp>
+                <stringProp name="script">SampleResult.setIgnore();
+
+File localWorkingCopy = new File(vars.get(&quot;REPO_FOLDER&quot;))
+
+int maxFileSuffix = 10
+int fileSuffix = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, maxFileSuffix + 1)
+String fileName = String.format(&quot;default_branch_file-%02d.txt&quot;, fileSuffix);
+
+def now = new Date()
+
+def max = Integer.valueOf(vars.get(&quot;MAX_NUM_LINES_TO_CHANGE&quot;))
+int number_of_lines = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, max + 1);
+
+def file = new File(localWorkingCopy.toString(), fileName);
+if(!file.exists()){
+	file.createNewFile();
+}
+
+file.withWriterAppend(&apos;utf-8&apos;) { writer -&gt;
+	for (i = 0; i &lt; number_of_lines; i++) {
+		writer.writeLine &apos;Hey, this is a new line: (&apos; + (i+1) + &apos;/&apos; + number_of_lines + &apos;) &apos; + Math.random().toString() + &apos; &apos; + now
+	}
+}</stringProp>
+              </JSR223Sampler>
+              <hashTree/>
+            </hashTree>
+            <SystemSampler guiclass="SystemSamplerGui" testclass="SystemSampler" testname="addon_git_add" enabled="true">
+              <boolProp name="SystemSampler.checkReturnCode">true</boolProp>
+              <stringProp name="SystemSampler.expectedReturnCode">0</stringProp>
+              <stringProp name="SystemSampler.command">git</stringProp>
+              <elementProp name="SystemSampler.arguments" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+                <collectionProp name="Arguments.arguments">
+                  <elementProp name="" elementType="Argument">
+                    <stringProp name="Argument.name"></stringProp>
+                    <stringProp name="Argument.value">add</stringProp>
+                    <stringProp name="Argument.metadata">=</stringProp>
+                  </elementProp>
+                  <elementProp name="" elementType="Argument">
+                    <stringProp name="Argument.name"></stringProp>
+                    <stringProp name="Argument.value">.</stringProp>
+                    <stringProp name="Argument.metadata">=</stringProp>
+                  </elementProp>
+                </collectionProp>
+              </elementProp>
+              <elementProp name="SystemSampler.environment" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+                <collectionProp name="Arguments.arguments"/>
+              </elementProp>
+              <stringProp name="SystemSampler.directory">${REPO_FOLDER}</stringProp>
+              <stringProp name="SystemSampler.stderr">${__P(GIT_LOG_DIR)}/giterrors.log</stringProp>
+            </SystemSampler>
+            <hashTree/>
+            <SystemSampler guiclass="SystemSamplerGui" testclass="SystemSampler" testname="addon_git_commit" enabled="true">
+              <boolProp name="SystemSampler.checkReturnCode">true</boolProp>
+              <stringProp name="SystemSampler.expectedReturnCode">0</stringProp>
+              <stringProp name="SystemSampler.command">git</stringProp>
+              <elementProp name="SystemSampler.arguments" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+                <collectionProp name="Arguments.arguments">
+                  <elementProp name="" elementType="Argument">
+                    <stringProp name="Argument.name"></stringProp>
+                    <stringProp name="Argument.value">commit</stringProp>
+                    <stringProp name="Argument.metadata">=</stringProp>
+                  </elementProp>
+                  <elementProp name="" elementType="Argument">
+                    <stringProp name="Argument.name"></stringProp>
+                    <stringProp name="Argument.value">-m</stringProp>
+                    <stringProp name="Argument.metadata">=</stringProp>
+                  </elementProp>
+                  <elementProp name="" elementType="Argument">
+                    <stringProp name="Argument.name"></stringProp>
+                    <stringProp name="Argument.value">${COMMIT_MESSAGE}</stringProp>
+                    <stringProp name="Argument.metadata">=</stringProp>
+                  </elementProp>
+                </collectionProp>
+              </elementProp>
+              <elementProp name="SystemSampler.environment" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+                <collectionProp name="Arguments.arguments"/>
+              </elementProp>
+              <stringProp name="SystemSampler.directory">${REPO_FOLDER}</stringProp>
+              <stringProp name="SystemSampler.stderr">${__P(GIT_LOG_DIR)}/giterrors.log</stringProp>
+            </SystemSampler>
+            <hashTree/>
+            <SystemSampler guiclass="SystemSamplerGui" testclass="SystemSampler" testname="addon_git_push_via_${GIT_PROTOCOL}" enabled="true">
+              <boolProp name="SystemSampler.checkReturnCode">true</boolProp>
+              <stringProp name="SystemSampler.expectedReturnCode">0</stringProp>
+              <stringProp name="SystemSampler.command">git</stringProp>
+              <elementProp name="SystemSampler.arguments" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+                <collectionProp name="Arguments.arguments">
+                  <elementProp name="" elementType="Argument">
+                    <stringProp name="Argument.name"></stringProp>
+                    <stringProp name="Argument.value">push</stringProp>
+                    <stringProp name="Argument.metadata">=</stringProp>
+                  </elementProp>
+                  <elementProp name="" elementType="Argument">
+                    <stringProp name="Argument.name"></stringProp>
+                    <stringProp name="Argument.value">origin</stringProp>
+                    <stringProp name="Argument.metadata">=</stringProp>
+                  </elementProp>
+                  <elementProp name="" elementType="Argument">
+                    <stringProp name="Argument.name"></stringProp>
+                    <stringProp name="Argument.value">master</stringProp>
+                    <stringProp name="Argument.metadata">=</stringProp>
+                  </elementProp>
+                </collectionProp>
+              </elementProp>
+              <elementProp name="SystemSampler.environment" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+                <collectionProp name="Arguments.arguments">
+                  <elementProp name="GIT_SSH_VARIANT" elementType="Argument">
+                    <stringProp name="Argument.name">GIT_SSH_VARIANT</stringProp>
+                    <stringProp name="Argument.value">ssh</stringProp>
+                    <stringProp name="Argument.metadata">=</stringProp>
+                  </elementProp>
+                  <elementProp name="GIT_SSH_COMMAND" elementType="Argument">
+                    <stringProp name="Argument.name">GIT_SSH_COMMAND</stringProp>
+                    <stringProp name="Argument.value">${__P(GIT_SSH_COMMAND)}</stringProp>
+                    <stringProp name="Argument.metadata">=</stringProp>
+                  </elementProp>
+                  <elementProp name="GIT_SSL_NO_VERIFY" elementType="Argument">
+                    <stringProp name="Argument.name">GIT_SSL_NO_VERIFY</stringProp>
+                    <stringProp name="Argument.value">1</stringProp>
+                    <stringProp name="Argument.metadata">=</stringProp>
+                  </elementProp>
+                </collectionProp>
+              </elementProp>
+              <stringProp name="SystemSampler.directory">${REPO_FOLDER}</stringProp>
+              <stringProp name="SystemSampler.stderr">${__P(GIT_LOG_DIR)}/giterrors.log</stringProp>
+            </SystemSampler>
+            <hashTree>
+              <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="OS Process Result" enabled="true">
+                <stringProp name="cacheKey">true</stringProp>
+                <stringProp name="filename"></stringProp>
+                <stringProp name="parameters"></stringProp>
+                <stringProp name="script">import org.apache.commons.lang3.StringUtils;
+
+def responseCode = prev.getResponseCode();
+
+if (responseCode != &quot;0&quot;) {
+	String responseData = prev.getResponseDataAsString();
+	String outputMessage = StringUtils.abbreviate(responseData.replaceAll(&quot;\n&quot;, &quot; &quot;), 100);
+	prev.setResponseMessage(&quot;git push failed: &quot; + outputMessage);
+
+	prev.setSuccessful(false);
+
+	String envData = prev.getSamplerData();
+	log.error(responseData + envData);
+}</stringProp>
+                <stringProp name="scriptLanguage">groovy</stringProp>
+              </JSR223PostProcessor>
+              <hashTree/>
+            </hashTree>
+            <SystemSampler guiclass="SystemSamplerGui" testclass="SystemSampler" testname="addon_git_fetch_via_${GIT_PROTOCOL}" enabled="true">
               <boolProp name="SystemSampler.checkReturnCode">true</boolProp>
               <stringProp name="SystemSampler.expectedReturnCode">0</stringProp>
               <stringProp name="SystemSampler.command">git</stringProp>
